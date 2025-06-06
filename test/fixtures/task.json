@@ -6,7 +6,7 @@
     "task": {
       "id": 1,
       "token": "abcdef",
-      "title": "Running github-runners on monorepo"
+      "title": "Fix a minor bug"
     }
   }
 }

@@ -1,28 +1,40 @@
 import { FastifyInstance } from 'fastify';
-import { verifyWebhook } from '@automa/bot';
+import { verifyWebhook, type WebhookPayload } from '@automa/bot';
 import { ATTR_HTTP_REQUEST_HEADER } from '@opentelemetry/semantic-conventions/incubating';
+import { zodTextFormat } from 'openai/helpers/zod';
+import { z } from 'zod';
 
 import { env } from '../../env';
 
-import { automa } from '../../clients';
+import { automa, openai } from '../../clients';
 import { update } from '../../update';
+
+const PullRequest = z.object({
+  title: z.string().max(72),
+  body: z.string(),
+});
+
+const generatePrFields = async (description: string) => {
+  const response = await openai.responses.parse({
+    model: 'gpt-4.1-mini',
+    instructions:
+      'Generate a github pull request title (should be short) and body based on the description given by the user. Make sure to not include any diffs in pull request body.',
+    input: description,
+    text: {
+      format: zodTextFormat(PullRequest, 'pr'),
+    },
+  });
+
+  return response.output_parsed;
+};
 
 export default async function (app: FastifyInstance) {
   app.post<{
-    Body: {
-      id: string;
-      timestamp: string;
-      data: {
-        task: {
-          id: number;
-          token: string;
-          title: string;
-        };
-      };
-    };
+    Body: WebhookPayload;
   }>('/automa', async (request, reply) => {
     const id = request.headers['webhook-id'] as string;
     const signature = request.headers['webhook-signature'] as string;
+    const timestamp = Date.now();
 
     // Verify request
     if (!verifyWebhook(env.AUTOMA.WEBHOOK_SECRET, signature, request.body)) {
@@ -49,30 +61,47 @@ export default async function (app: FastifyInstance) {
 
     const baseURL = request.headers['x-automa-server-host'] as string;
 
-    // Download code
-    const folder = await automa.code.download(request.body.data, { baseURL });
-
-    try {
-      // Modify code
-      await update(app, folder);
-
-      // Propose code
-      await automa.code.propose(
-        {
-          ...request.body.data,
-          proposal: {
-            message: env.COMMIT_MESSAGE,
-          },
-        },
-        {
-          baseURL,
-        },
-      );
-    } finally {
-      // Clean up
-      automa.code.cleanup(request.body.data);
-    }
+    await app.events.processTask.publish(
+      `${request.body.data.task.id}-${timestamp}`,
+      {
+        baseURL,
+        data: request.body.data,
+      },
+    );
 
     return reply.send();
   });
 }
+
+export const runUpdate = async (
+  app: FastifyInstance,
+  baseURL: string,
+  data: WebhookPayload['data'],
+) => {
+  // Download code
+  const folder = await automa.code.download(data, { baseURL });
+
+  try {
+    // Modify code
+    const message = await update(app, folder, data);
+
+    const prFields = await generatePrFields(message);
+
+    // Propose code
+    await automa.code.propose(
+      {
+        ...data,
+        proposal: {
+          title: prFields?.title,
+          body: prFields?.body,
+        },
+      },
+      {
+        baseURL,
+      },
+    );
+  } finally {
+    // Clean up
+    automa.code.cleanup(data);
+  }
+};
