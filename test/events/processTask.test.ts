@@ -51,7 +51,7 @@ const codeFixture = join(__dirname, '..', 'fixtures', 'code');
 const openAIRequestData = {
   model: 'gpt-4.1-mini',
   instructions:
-    'Generate a github pull request title (should be short) and body based on the description given by the user. Make sure to not include any diffs in pull request body.',
+    'Generate a github pull request title (should be short) and body (using markdown) based on the description given by the user. Make sure to not include any diffs in pull request body.',
   input: 'Task completed successfully',
   text: {
     format: {
