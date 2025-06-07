@@ -3,12 +3,10 @@ import { join } from 'node:path';
 
 import { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { assert } from 'chai';
-import sinon, { SinonStub } from 'sinon';
+import { createSandbox, SinonSandbox, SinonStub } from 'sinon';
 import { generateWebhookSignature } from '@automa/bot';
 
 import { env } from '../src/env';
-
-import { automa } from '../src/clients';
 
 import { call, server } from './utils';
 
@@ -35,11 +33,13 @@ const callWithFixture = async (app: FastifyInstance, fileName: string) => {
 };
 
 suite('automa hook', () => {
-  let app: FastifyInstance, response: LightMyRequestResponse;
-  let downloadStub: SinonStub, proposeStub: SinonStub, cleanupStub: SinonStub;
+  let app: FastifyInstance, response: LightMyRequestResponse, timestamp: number;
+  let sandbox: SinonSandbox, publishStub: SinonStub;
 
   suiteSetup(async () => {
     app = await server();
+    sandbox = createSandbox();
+    timestamp = Date.now();
   });
 
   suiteTeardown(async () => {
@@ -47,19 +47,13 @@ suite('automa hook', () => {
   });
 
   setup(() => {
-    downloadStub = sinon
-      .stub(automa.code, 'download')
-      .resolves(join(__dirname, 'fixtures', 'code'));
+    sandbox.stub(Date, 'now').returns(timestamp);
 
-    proposeStub = sinon.stub(automa.code, 'propose').resolves();
-
-    cleanupStub = sinon.stub(automa.code, 'cleanup').resolves();
+    publishStub = sandbox.stub(app.events.processTask, 'publish').resolves();
   });
 
   teardown(() => {
-    downloadStub.restore();
-    proposeStub.restore();
-    cleanupStub.restore();
+    sandbox.restore();
   });
 
   test('with no signature should return 401', async () => {
@@ -97,146 +91,19 @@ suite('automa hook', () => {
       assert.isEmpty(response.body);
     });
 
-    test('should download code', async () => {
-      assert.equal(downloadStub.callCount, 1);
-      assert.deepEqual(downloadStub.firstCall.args, [
+    test('should publish processTask event', async () => {
+      assert.equal(publishStub.callCount, 1);
+      assert.deepEqual(publishStub.firstCall.args, [
+        `1-${timestamp}`,
         {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
+          data: {
+            task: {
+              id: 1,
+              token: 'abcdef',
+              title: 'Fix a minor bug',
+            },
           },
-        },
-        {
           baseURL: 'https://api.automa.app',
-        },
-      ]);
-    });
-
-    test('should propose code', async () => {
-      assert.equal(proposeStub.callCount, 1);
-      assert.deepEqual(proposeStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
-          proposal: {
-            message: '',
-          },
-        },
-        {
-          baseURL: 'https://api.automa.app',
-        },
-      ]);
-    });
-
-    test('should cleanup code', async () => {
-      assert.equal(cleanupStub.callCount, 1);
-      assert.deepEqual(cleanupStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
-        },
-      ]);
-    });
-  });
-
-  suite('with download error', () => {
-    setup(async () => {
-      downloadStub.rejects(new Error('Download error'));
-
-      response = await callWithFixture(app, 'task');
-    });
-
-    test('should return 500', async () => {
-      assert.equal(response.statusCode, 500);
-    });
-
-    test('should download code', async () => {
-      assert.equal(downloadStub.callCount, 1);
-      assert.deepEqual(downloadStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
-        },
-        {
-          baseURL: 'https://api.automa.app',
-        },
-      ]);
-    });
-
-    test('should not propose code', async () => {
-      assert.equal(proposeStub.callCount, 0);
-    });
-
-    test('should not cleanup code', async () => {
-      assert.equal(cleanupStub.callCount, 0);
-    });
-  });
-
-  suite('with propose error', () => {
-    setup(async () => {
-      proposeStub.rejects(new Error('Propose error'));
-
-      response = await callWithFixture(app, 'task');
-    });
-
-    test('should return 500', async () => {
-      assert.equal(response.statusCode, 500);
-    });
-
-    test('should download code', async () => {
-      assert.equal(downloadStub.callCount, 1);
-      assert.deepEqual(downloadStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
-        },
-        {
-          baseURL: 'https://api.automa.app',
-        },
-      ]);
-    });
-
-    test('should propose code', async () => {
-      assert.equal(proposeStub.callCount, 1);
-      assert.deepEqual(proposeStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
-          proposal: {
-            message: '',
-          },
-        },
-        {
-          baseURL: 'https://api.automa.app',
-        },
-      ]);
-    });
-
-    test('should cleanup code', async () => {
-      assert.equal(cleanupStub.callCount, 1);
-      assert.deepEqual(cleanupStub.firstCall.args, [
-        {
-          task: {
-            id: 1,
-            token: 'abcdef',
-            title: 'Running github-runners on monorepo',
-          },
         },
       ]);
     });

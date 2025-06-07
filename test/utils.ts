@@ -1,5 +1,7 @@
 // Import the modules to use their typings
 import '../src/plugins/error';
+// Import mocks to ensure they are loaded before the server starts
+import './mocks';
 
 import { FastifyInstance, InjectOptions } from 'fastify';
 

@@ -11,6 +11,8 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import httpErrors from 'http-errors';
 
+import eventsPlugin from './events';
+
 export const server = async () => {
   const app = fastify({
     logger: !isTest
@@ -31,6 +33,8 @@ export const server = async () => {
 
   await app.register(fastifySensible);
   await app.register(fastifyHelmet);
+
+  await app.register(eventsPlugin);
 
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof httpErrors.HttpError) {

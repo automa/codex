@@ -23,11 +23,16 @@ const schema = Type.Object({
       default: 'atma_whsec_codex',
     }),
   }),
-  COMMIT_MESSAGE: Type.String({
-    default: '',
+  OPENAI: Type.Object({
+    API_KEY: Type.String({
+      default: 'openai_api_key',
+    }),
   }),
   PORT: Type.Number({
     default: 5007,
+  }),
+  REDIS_URL: Type.String({
+    default: 'redis://localhost:6379',
   }),
   SENTRY_DSN: Type.String({
     default: '',

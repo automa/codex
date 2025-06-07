@@ -28,7 +28,7 @@ module.exports = {
           ['^\\./env$'],
           [
             '^(fastify)$',
-            '^(chai|sinon)$',
+            '^(chai|quibble|sinon)$',
             '^(fastify-.*|@fastify/.*)(/.*)?$',
             '^(@opentelemetry/(sdk-node|semantic-conventions))$',
             '^@?\\w',
