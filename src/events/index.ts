@@ -93,7 +93,7 @@ const eventsPlugin: FastifyPluginAsync<{
 
       if (handler && subscribe) {
         try {
-          app.log.info(job.data, `Processing ${job.name} event`);
+          app.log.info({}, `Processing ${job.name} event`);
 
           await handler(app, job.data);
         } catch (error) {
