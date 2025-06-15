@@ -60,8 +60,8 @@ export const server = async () => {
     await app.register(fastifySwagger, {
       openapi: {
         info: {
-          title: 'GitHub Runners Bot',
-          description: 'GitHub Runners Bot documentation',
+          title: 'Codex Bot',
+          description: 'Codex Bot documentation',
           version,
         },
       },
