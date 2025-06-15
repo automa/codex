@@ -24,9 +24,7 @@ const schema = Type.Object({
     }),
   }),
   OPENAI: Type.Object({
-    API_KEY: Type.String({
-      default: 'openai_api_key',
-    }),
+    API_KEY: Type.String(),
   }),
   PORT: Type.Number({
     default: 5007,
@@ -44,6 +42,6 @@ type Schema = Static<typeof schema>;
 export const env = envSchema<Schema>({
   schema,
   dotenv: {
-    path: join(dirname(__dirname), '.env'),
+    path: join(dirname(__dirname), isTest ? '.env.test' : '.env'),
   },
 });
