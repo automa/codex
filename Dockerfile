@@ -28,6 +28,7 @@ LABEL org.opencontainers.image.title="Automa Codex Bot"
 LABEL org.opencontainers.image.description="Codex Bot for Automa"
 
 ENV NODE_ENV=production
+ENV PORT=8000
 
 WORKDIR /app
 
