@@ -9,7 +9,7 @@ This is an [AI](https://docs.automa.app/agents/types#ai) & [manual](https://docs
 
 ## Getting Started
 
-[![Install on Automa](https://automa.app/install.svg)](https://automa.app/agents/openai/codex)
+[![Install on Automa](https://automa.app/install.svg)](https://console.automa.app/$/bots/new/openai/codex)
 
 ### Self-Hosting
 
