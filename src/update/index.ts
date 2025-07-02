@@ -1,19 +1,19 @@
 import { join } from 'node:path';
 
 import { FastifyInstance } from 'fastify';
-import { CodeFolder, WebhookPayload } from '@automa/bot';
+import { CodeFolder, WebhookEventData, WebhookEventType } from '@automa/bot';
 import { $ } from 'zx';
 
 export const update = async (
   app: FastifyInstance,
   folder: CodeFolder,
-  data: WebhookPayload['data'],
+  data: WebhookEventData<WebhookEventType.TaskCreated>,
 ) => {
   const codex = join(__dirname, '..', '..', 'node_modules', '.bin', 'codex');
 
   const description = data.task.items
     .filter(({ type }) => type === 'message')
-    .map(({ data }) => `<description>${data.content}</description>`)
+    .map(({ data }) => `<description>${(data as any).content}</description>`)
     .join('\n');
 
   const message = `<title>${data.task.title}</title>${description}`;
