@@ -1,5 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { verifyWebhook, type WebhookPayload } from '@automa/bot';
+import {
+  verifyWebhook,
+  WebhookEventData,
+  WebhookEventType,
+  type WebhookPayload,
+} from '@automa/bot';
 import { ATTR_HTTP_REQUEST_HEADER } from '@opentelemetry/semantic-conventions/incubating';
 import { zodTextFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
@@ -61,13 +66,15 @@ export default async function (app: FastifyInstance) {
 
     const baseURL = request.headers['x-automa-server-host'] as string;
 
-    await app.events.processTask.publish(
-      `${request.body.data.task.id}-${timestamp}`,
-      {
-        baseURL,
-        data: request.body.data,
-      },
-    );
+    if (request.body.type === WebhookEventType.TaskCreated) {
+      await app.events.processTask.publish(
+        `${request.body.data.task.id}-${timestamp}`,
+        {
+          baseURL,
+          data: request.body.data,
+        },
+      );
+    }
 
     return reply.send();
   });
@@ -76,7 +83,7 @@ export default async function (app: FastifyInstance) {
 export const runUpdate = async (
   app: FastifyInstance,
   baseURL: string,
-  data: WebhookPayload['data'],
+  data: WebhookEventData<WebhookEventType.TaskCreated>,
 ) => {
   // Download code
   const folder = await automa.code.download(data, { baseURL });
