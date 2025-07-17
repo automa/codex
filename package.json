@@ -4,7 +4,7 @@
   "private": true,
   "main": "build/index.js",
   "dependencies": {
-    "@automa/bot": "~0.2.8",
+    "@automa/bot": "~0.3.0",
     "@fastify/autoload": "~5.7.1",
     "@fastify/helmet": "~11.1.1",
     "@fastify/sensible": "~5.2.0",
