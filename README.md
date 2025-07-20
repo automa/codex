@@ -1,6 +1,6 @@
 # codex
 
-This is an [AI](https://docs.automa.app/bots/types#ai) & [manual](https://docs.automa.app/bots/types#manual) [agent](https://docs.automa.app/bots/types#agent) for [**Automa**](https://automa.app) that uses [OpenAI's Codex](https://github.com/openai/codex) tool to work on tasks.
+This is an [AI](https://docs.automa.app/bots/types#ai) & [manual](https://docs.automa.app/bots/types#manual) [agent](https://docs.automa.app/bots#bot-vs-agent) for [**Automa**](https://automa.app) that uses [OpenAI's Codex](https://github.com/openai/codex) tool to work on tasks.
 
 #### Features
 
